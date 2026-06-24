@@ -43,6 +43,7 @@ public class TeleportRequestManager {
 
     private void processTeleportRequests(List<UUID> ignoredPlayersForThisRun, long warmUpTime, String prefix) {
         var tempRequests = new ArrayList<>(requests);
+        int maxCheckFailures = plugin.getConfig().getInt("tpa.check-target-position.max-retries", 10);
 
         for (var request : tempRequests) {
             var sender = plugin.getServer().getPlayer(request.getSender());
@@ -92,6 +93,22 @@ public class TeleportRequestManager {
             }
 
             if (request.isTeleporting() && (request.getWarmUpSinceTimestamp() + (warmUpTime * 1000) <= System.currentTimeMillis() || sender.hasPermission("justplayer.tpa.wait.bypass"))) {
+                if (
+                        !(teleportPlayer.getGameMode().equals(GameMode.CREATIVE) || teleportPlayer.getGameMode().equals(GameMode.SPECTATOR))
+                                && !this.isSafeForTeleportation(teleportPlayerTo.getLocation())
+                ) {
+                    plugin.log("Teleportation is not safe for player, delaying teleport...", "Debug");
+                    request.incrementUnsafeDelayCount();
+
+                    if (maxCheckFailures > 0 && request.getUnsafeDelayCount() >= maxCheckFailures) {
+                        cancelRequest(request,
+                                "messages.request.failed-unsafe-to", Map.of("playername", teleportPlayerTo.getName()),
+                                "messages.request.failed-unsafe-from", Map.of("playername", teleportPlayer.getName())
+                        );
+                    }
+
+                    continue;
+                }
 
                 teleportPlayer.sendMessage(prefix + plugin.translate("messages.request.teleported-to", Map.of("playername", teleportPlayerTo.getName())));
                 teleportPlayerTo.sendMessage(prefix + plugin.translate("messages.request.teleported-from", Map.of("playername", teleportPlayer.getName())));
