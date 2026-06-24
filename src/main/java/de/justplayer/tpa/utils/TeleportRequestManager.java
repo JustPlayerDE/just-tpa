@@ -3,7 +3,8 @@ package de.justplayer.tpa.utils;
 import de.justplayer.tpa.Plugin;
 import de.justplayer.tpa.ReturnRequest;
 import de.justplayer.tpa.TeleportRequest;
-import org.bukkit.Bukkit;
+import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -16,6 +17,10 @@ public class TeleportRequestManager {
     private final List<TeleportRequest> requests = new ArrayList<>();
     private final Map<UUID, ReturnRequest> returnRequests = new ConcurrentHashMap<>();
     private BukkitTask scheduler;
+
+    private static final Set<Material> HARMFUL = Set.of(
+            Material.LAVA, Material.FIRE, Material.SOUL_FIRE
+    );
 
     public TeleportRequestManager(Plugin plugin) {
         this.plugin = plugin;
@@ -307,5 +312,84 @@ public class TeleportRequestManager {
 
     public void cancelRequest(ReturnRequest request) {
         cancelRequest(request, "messages.request.canceled");
+    }
+
+    private boolean isSafeForTeleportation(Location location) {
+        World world = location.getWorld();
+        if (world == null) {
+            plugin.log("No world at target location?", "Debug");
+            return false;
+        }
+
+        if (!plugin.config.getBoolean("tpa.check-target-position.checks.solid-ground")) {
+            return true;
+        }
+
+        if (location.getY() < world.getMinHeight()) {
+            plugin.log("Below world", "Debug");
+            return false;
+        }
+
+        boolean checkWorldCeiling = plugin.config.getBoolean("tpa.check-target-position.checks.world-ceiling.enabled");
+        if (checkWorldCeiling && location.getY() > world.getMaxHeight() - plugin.config.getInt("tpa.check-target-position.checks.world-ceiling.buffer")) {
+            plugin.log("Too close to or above world ceiling", "Debug");
+            return false;
+        }
+
+        if (!world.getWorldBorder().isInside(location)) {
+            plugin.log("Outside world border", "Debug");
+            return false;
+        }
+
+        boolean checkSolidGround = plugin.config.getBoolean("tpa.check-target-position.checks.solid-ground");
+        boolean checkRoomToStand = plugin.config.getBoolean("tpa.check-target-position.checks.room-to-stand");
+        boolean checkNearbyHarmful = plugin.config.getBoolean("tpa.check-target-position.checks.nearby-harmful");
+
+        if (!checkSolidGround && !checkRoomToStand && !checkNearbyHarmful) {
+            return true;
+        }
+
+        int blockX = location.getBlockX(), blockY = location.getBlockY(), blockZ = location.getBlockZ();
+
+        try {
+            for (int offsetX = -1; offsetX <= 1; offsetX++) {
+                for (int offsetZ = -1; offsetZ <= 1; offsetZ++) {
+                    int chunkX = (blockX + offsetX) >> 4, chunkZ = (blockZ + offsetZ) >> 4;
+
+                    if (plugin.isPaper) {
+                        world.getChunkAt(chunkX, chunkZ);
+                    } else if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                        // i have read that getChunkAt could break stuff if async on spigot, better safe than sorry
+                        plugin.log("Chunk not loaded near target", "Debug");
+                        return false;
+                    }
+
+                    boolean isCenter = offsetX == 0 && offsetZ == 0;
+                    Block ground = world.getBlockAt(blockX + offsetX, blockY - 1, blockZ + offsetZ);
+                    Block feet = world.getBlockAt(blockX + offsetX, blockY, blockZ + offsetZ);
+                    Block head = world.getBlockAt(blockX + offsetX, blockY + 1, blockZ + offsetZ);
+
+                    if (isCenter && checkSolidGround && !ground.getType().isSolid()) {
+                        plugin.log("No solid ground", "Debug");
+                        return false;
+                    }
+
+                    if (isCenter && checkRoomToStand && (feet.getType().isSolid() || head.getType().isSolid())) {
+                        plugin.log("No room to stand", "Debug");
+                        return false;
+                    }
+
+                    if (checkNearbyHarmful && (HARMFUL.contains(ground.getType()) || HARMFUL.contains(feet.getType()) || HARMFUL.contains(head.getType()))) {
+                        Material harmful = HARMFUL.contains(ground.getType()) ? ground.getType() : HARMFUL.contains(feet.getType()) ? feet.getType() : head.getType();
+                        plugin.log("Harmful block near target (" + harmful + ")", "Debug");
+                        return false;
+                    }
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            plugin.log(e.getMessage(), "Warning");
+            return false;
+        }
     }
 }
