@@ -134,6 +134,7 @@ public class TeleportRequestManager {
 
     private List<UUID> processReturnRequests(long warmUpTime, String prefix) {
         var returnedPlayers = new ArrayList<UUID>();
+        int maxCheckFailures = plugin.getConfig().getInt("tpa.check-target-position.max-retries", 10);
 
         for (var playerId : new ArrayList<>(returnRequests.keySet())) {
             var request = returnRequests.get(playerId);
@@ -167,6 +168,20 @@ public class TeleportRequestManager {
 
             long fulfillRequestAt = request.getWarmUpSinceTimestamp() + (warmUpTime * 1000);
             if (isTeleporting && (fulfillRequestAt <= System.currentTimeMillis() || hasBypassWait)) {
+                if (
+                        !(teleportPlayer.getGameMode().equals(GameMode.CREATIVE) || teleportPlayer.getGameMode().equals(GameMode.SPECTATOR))
+                                && !this.isSafeForTeleportation(request.getLocation())
+                ) {
+                    plugin.log("Teleportation is not safe for player, delaying return...", "Debug");
+                    request.incrementUnsafeDelayCount();
+
+                    if (maxCheckFailures > 0 && request.getUnsafeDelayCount() >= maxCheckFailures) {
+                        cancelRequest(request, plugin.translate("messages.request.failed-unsafe-return"));
+                    }
+
+                    continue;
+                }
+
                 returnRequests.remove(playerId);
                 returnedPlayers.add(request.getPlayerId());
 
@@ -218,7 +233,7 @@ public class TeleportRequestManager {
      */
     public TeleportRequest getRequestBySender(UUID playerId) {
         var requestTimeout = plugin.getConfig().getInt("tpa.timeout");
-        
+
         for (Iterator<TeleportRequest> teleportRequestIterator = requests.iterator(); teleportRequestIterator.hasNext(); ) {
             var request = teleportRequestIterator.next();
 
