@@ -12,6 +12,7 @@ public class TeleportRequest {
 
     private final boolean isHereRequest;
     private boolean isAccepted = false;
+    private int unsafeDelayCount = 0;
 
     public TeleportRequest(UUID sender, UUID receiver, long timestamp, boolean isHereRequest) {
         this.sender = sender;
@@ -52,8 +53,7 @@ public class TeleportRequest {
         this.teleporting = teleporting;
     }
 
-    public boolean isTeleporting()
-    {
+    public boolean isTeleporting() {
         return this.teleporting;
     }
 
@@ -61,8 +61,15 @@ public class TeleportRequest {
         this.warmUpSinceTimestamp = timestamp;
     }
 
-    public long getWarmUpSinceTimestamp()
-    {
+    public long getWarmUpSinceTimestamp() {
         return this.warmUpSinceTimestamp;
+    }
+
+    public int getUnsafeDelayCount() {
+        return unsafeDelayCount;
+    }
+
+    public void incrementUnsafeDelayCount() {
+        unsafeDelayCount++;
     }
 }

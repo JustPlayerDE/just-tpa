@@ -9,6 +9,7 @@ public class ReturnRequest {
     private final Location location;
     private final long timestamp;
     private boolean requested = false;
+    private int unsafeDelayCount = 0;
 
     private boolean teleporting;
     private long warmUpSinceTimestamp;
@@ -48,8 +49,7 @@ public class ReturnRequest {
         this.teleporting = teleporting;
     }
 
-    public boolean isTeleporting()
-    {
+    public boolean isTeleporting() {
         return this.teleporting;
     }
 
@@ -57,8 +57,15 @@ public class ReturnRequest {
         this.warmUpSinceTimestamp = timestamp;
     }
 
-    public long getWarmUpSinceTimestamp()
-    {
+    public long getWarmUpSinceTimestamp() {
         return this.warmUpSinceTimestamp;
+    }
+
+    public int getUnsafeDelayCount() {
+        return unsafeDelayCount;
+    }
+
+    public void incrementUnsafeDelayCount() {
+        unsafeDelayCount++;
     }
 }
