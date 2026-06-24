@@ -1,8 +1,10 @@
 name: release
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+  push:
+    tags:
+      - "[0-9]*"
 
 concurrency: release
 
@@ -10,10 +12,17 @@ jobs:
   release:
     permissions:
       contents: write
-      packages: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$(date -u +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
+          fi
       - name: Set up JDK 18
         uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
         with:
@@ -21,25 +30,14 @@ jobs:
           java-version: 18
           cache: 'maven'
       - name: Build with Maven
-        run: mvn --batch-mode --update-snapshots package "-Drevision=${{ github.event.release.tag_name }}"
-      - uses: Kir-Antipov/mc-publish@995edadc13559a8b28d0b7e6571229f067ec7659 # v3.3.0
+        run: mvn --batch-mode --update-snapshots package "-Drevision=${{ steps.tag.outputs.tag }}"
+      - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-          modrinth-id: GM9AuKjX
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          #modrinth-featured: true
-          #modrinth-unfeature-mode: subset
-
-          #curseforge-id: 934935
-          #curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "Release ${{ steps.tag.outputs.tag }}"
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
-            target/just-tpa-${{ github.event.release.tag_name }}.jar
-
-          loaders: |
-            spigot
-            paper
-            bukkit
-          game-versions: |
-            >1.19
-          fail-mode: skip
+            target/just-tpa-${{ steps.tag.outputs.tag }}.jar
