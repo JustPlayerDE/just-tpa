@@ -148,7 +148,7 @@ public class Plugin extends JavaPlugin {
             // The Modrinth api is very handy for this, we just provide the current context, and it returns if there is something new for that.
             // With new I mean something different than we have currently, too lazy to implement actual version logic and just assume different = new ^^
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("https://api.modrinth.com/v2/project/GM9AuKjX/version?game_versions=" + minecraftVersion + "&loaders=" + serverSoftware))
+                    .uri(java.net.URI.create("https://api.modrinth.com/v2/project/GM9AuKjX/version?include_changelog=false&game_versions=" + minecraftVersion + "&loaders=" + serverSoftware))
                     .GET()
                     .header("User-Agent", "JustPlayerDE/justplayer-tpa/v" + currentPluginVersion + " (https://modrinth.com/plugin/GM9AuKjX justin.k@justplayer.de)")
                     .build();
