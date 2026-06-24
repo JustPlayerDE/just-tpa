@@ -54,3 +54,4 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             target/just-tpa-${{ steps.tag.outputs.tag }}.jar
+            ${{ steps.attest.outputs.bundle-path }}
