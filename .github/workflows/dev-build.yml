@@ -22,11 +22,12 @@ jobs:
           cache: 'maven'
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package "-Drevision=git-${{ github.ref_name }}-${GITHUB_SHA::6}"
-      - uses: marvinpinto/action-automatic-releases@919008cf3f741b179569b7a6fb4d8860689ab7f0 # v1.2.1
+      - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
-          name: "Development build"
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: "latest"
+          tag_name: dev-${{ github.run_number }}
+          name: "Development Build ${{ github.run_number }}"
           prerelease: true
+          make_latest: false
+          generate_release_notes: true
           files: |
             target/just-tpa-*.jar
