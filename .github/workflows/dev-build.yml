@@ -10,16 +10,16 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Set up JDK 18
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
         with:
           distribution: 'temurin'
           java-version: 18
           cache: 'maven'
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package "-Drevision=git-${{ github.ref_name }}-${GITHUB_SHA::6}"
-      - uses: "marvinpinto/action-automatic-releases@v1.2.1"
+      - uses: marvinpinto/action-automatic-releases@919008cf3f741b179569b7a6fb4d8860689ab7f0 # v1.2.1
         with:
           name: "Development build"
           repo_token: ${{ secrets.GITHUB_TOKEN }}

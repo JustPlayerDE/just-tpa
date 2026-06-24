@@ -11,16 +11,16 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Set up JDK 18
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
         with:
           distribution: 'temurin'
           java-version: 18
           cache: 'maven'
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package "-Drevision=${{ github.event.release.tag_name }}"
-      - uses: Kir-Antipov/mc-publish@v3.3
+      - uses: Kir-Antipov/mc-publish@995edadc13559a8b28d0b7e6571229f067ec7659 # v3.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
