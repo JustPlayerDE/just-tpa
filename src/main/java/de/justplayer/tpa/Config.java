@@ -35,6 +35,45 @@ public class Config {
                 "Time in seconds you have to wait before you can send another tpa here request"
         ));
 
+        config.addDefault("tpa.check-target-position.enabled", true);
+        config.setComments("tpa.check-target-position.enabled", List.of(
+                "Toggle target position validation.",
+                "I recommend to configure options below instead of fully disabling this.",
+                "These checks make it at least harder to kill/trap people, but nothing is perfect."
+        ));
+
+        config.addDefault("tpa.check-target-position.max-retries", 15);
+        config.setComments("tpa.check-target-position.max-retries", List.of(
+                "How many times we should check again until we fail the command (will check once a second)",
+                "0 will fail instantly (after the initial check)",
+                "-1 will allow it as long as it needs (infinite checks until it just works or fails otherwise)"
+        ));
+
+        config.addDefault("tpa.check-target-position.checks.world-ceiling.enabled", true);
+        config.setComments("tpa.check-target-position.checks.world-ceiling.enabled", List.of(
+                "Should we check if the target position is below world ceiling?"
+        ));
+        config.addDefault("tpa.check-target-position.checks.world-ceiling.buffer", 2);
+        config.setComments("tpa.check-target-position.checks.world-ceiling.buffer", List.of(
+                "Amount of blocks BELOW the world ceiling we should consider unsafe.",
+                "Default (2) is good to prevent players from being teleported above nether roof"
+        ));
+
+        config.addDefault("tpa.check-target-position.checks.solid-ground", true);
+        config.setComments("tpa.check-target-position.checks.solid-ground", List.of(
+                "Makes sure the player has solid ground on the target position"
+        ));
+
+        config.addDefault("tpa.check-target-position.checks.room-to-stand", true);
+        config.setComments("tpa.check-target-position.checks.room-to-stand", List.of(
+                "Makes sure the player can fully stand on the target position"
+        ));
+
+        config.addDefault("tpa.check-target-position.checks.nearby-harmful", true);
+        config.setComments("tpa.check-target-position.checks.nearby-harmful", List.of(
+                "Check surrounding blocks for harmful materials (lava, fire, etc)."
+        ));
+
         config.addDefault("tpa.verbose", false);
         config.setComments("tpa.verbose", List.of(
                 "Makes the plugin spam the console with maybe useful information (more verbose)"
@@ -102,6 +141,10 @@ public class Config {
         config.addDefault("messages.request.wait-from-here", "you will be teleported to %playername% in %time% seconds.");
         config.addDefault("messages.request.wait-return", "You will be returned in %time% seconds. Please stand still.");
 
+        config.addDefault("messages.request.failed-unsafe-to", "Teleport to %playername% failed because their location was unsafe for too long.");
+        config.addDefault("messages.request.failed-unsafe-from", "Teleport from %playername% failed because your location was unsafe for too long.");
+        config.addDefault("messages.request.failed-unsafe-return", "Return teleport failed because your previous location was unsafe for too long.");
+
         config.options().copyDefaults(true);
         this.plugin.saveConfig();
         this.plugin.reloadConfig();
@@ -110,6 +153,7 @@ public class Config {
     public String getString(String key) {
         return this.plugin.getConfig().getString(key);
     }
+
     public String getString(String key, String defaultValue) {
         return this.plugin.getConfig().getString(key, defaultValue);
     }
@@ -117,6 +161,7 @@ public class Config {
     public int getInt(String key) {
         return this.plugin.getConfig().getInt(key);
     }
+
     public int getInt(String key, int defaultValue) {
         return this.plugin.getConfig().getInt(key, defaultValue);
     }
@@ -124,6 +169,7 @@ public class Config {
     public boolean getBoolean(String key) {
         return this.plugin.getConfig().getBoolean(key);
     }
+
     public boolean getBoolean(String key, boolean defaultValue) {
         return this.plugin.getConfig().getBoolean(key, defaultValue);
     }
