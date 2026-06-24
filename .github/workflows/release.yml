@@ -12,6 +12,8 @@ jobs:
   release:
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -38,6 +40,9 @@ jobs:
           cache: 'maven'
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package "-Drevision=${{ steps.tag.outputs.tag }}"
+      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: target/just-tpa-${{ steps.tag.outputs.tag }}.jar
       - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
