@@ -28,7 +28,7 @@ jobs:
       - name: Find previous release tag
         id: prev
         run: |
-          PREV=$(git tag -l --sort=-version:refname | grep -v "^dev-" | grep -v "^${{ steps.tag.outputs.tag }}$" | head -1)
+          PREV=$(git tag -l --sort=-version:refname | grep "^[0-9]" | grep -v "^${{ steps.tag.outputs.tag }}$" | head -1)
           echo "tag=${PREV}" >> $GITHUB_OUTPUT
       - name: Set up JDK 18
         uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
