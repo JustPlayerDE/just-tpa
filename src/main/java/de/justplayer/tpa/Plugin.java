@@ -10,6 +10,7 @@ import de.justplayer.tpa.listeners.PlayerMoveListener;
 import de.justplayer.tpa.utils.CooldownManager;
 import de.justplayer.tpa.utils.TeleportRequestManager;
 import org.bstats.bukkit.Metrics;
+import org.bukkit.Bukkit;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.PluginManager;
@@ -27,7 +28,8 @@ public class Plugin extends JavaPlugin {
     public TeleportRequestManager teleportRequestManager;
 
     public boolean isFolia = false; // currently not supported (at all), just for the future
-    public boolean isPaper = false; // for the future
+    public boolean isPaper = false;
+    public boolean isSpigot = false;
     public boolean isDevelopmentVersion = false;
     public boolean isGitVersion = false;
 
@@ -36,13 +38,21 @@ public class Plugin extends JavaPlugin {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             isFolia = true;
-        } catch (ClassNotFoundException ignored) {}
+        } catch (ClassNotFoundException ignored) {
+        }
 
         // Paper
         try {
             Class.forName("io.papermc.paper.util.Tick");
             isPaper = true;
-        } catch (ClassNotFoundException ignored) {}
+        } catch (ClassNotFoundException ignored) {
+        }
+
+        try {
+            Class.forName("org.spigotmc.SpigotConfig");
+            isSpigot = true;
+        } catch (ClassNotFoundException ignored) {
+        }
 
         config = new Config(this);
         cooldownManager = new CooldownManager();
@@ -88,7 +98,7 @@ public class Plugin extends JavaPlugin {
         PluginManager pluginManager = getServer().getPluginManager();
 
         // well, i really dont know why you would do that but i wont ask why
-        if(isFeatureEnabled("tpa") || isFeatureEnabled("tpa-here")) {
+        if (isFeatureEnabled("tpa") || isFeatureEnabled("tpa-here")) {
             teleportRequestManager.start();
         } else {
             log("All TPA Features are disabled", "Warning");
@@ -136,10 +146,19 @@ public class Plugin extends JavaPlugin {
             return;
         }
 
-        String minecraftVersion = getServer().getVersion().split("-")[0];
-        String serverSoftware = getServer().getVersion().split("-")[1].split(" ")[0].toLowerCase();
-        String currentPluginVersion = getDescription().getVersion();
+        String fullVersion = Bukkit.getVersion();
+        String serverSoftware = Bukkit.getName().toLowerCase();
+        String minecraftVersion = fullVersion.replaceAll(".*\\(MC: ([^)]+)\\).*", "$1");
 
+        if (minecraftVersion.equals(fullVersion)) {
+            log("Could not detect Minecraft version from: " + fullVersion, "Warning");
+            return;
+        }
+
+        String currentPluginVersion = getDescription().getVersion();
+        log("Running Minecraft Version " + minecraftVersion + " on " + serverSoftware, "Debug");
+        log("Bukkit Version: " + fullVersion, "Debug");
+        log("Bukkit Name: " + serverSoftware, "Debug");
         log("Checking for updates...");
 
         getServer().getScheduler().runTaskAsynchronously(this, () -> {
